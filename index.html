@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMEI Barcode Scanner (Pro)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
+        body { font-family: 'Padauk', sans-serif; background-color: #f3f4f6; }
+        #reader video { object-fit: cover; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- Header & Cloud Connection -->
+        <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t-4 border-blue-500">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-800 flex items-center gap-2">
+                    📱 ဖုန်း IMEI စကင်နာ 
+                    <span id="cloudStatus" class="inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                        ချိတ်ဆက်နေသည်...
+                    </span>
+                </h1>
+                <p class="text-gray-500 text-sm mt-1">ဖုန်းနှင့် ကွန်ပျူတာကို ဂဏန်း ၅ လုံးတူညီအောင် ထည့်၍ ချိတ်ဆက်ပါ။</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <label class="text-sm font-semibold text-gray-700">ချိတ်ဆက်ရန် ကုဒ် :</label>
+                <div class="flex gap-2">
+                    <input type="text" id="roomCodeInput" class="w-24 text-center font-mono font-bold text-lg border border-gray-300 rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500 outline-none" maxlength="5">
+                    <button id="joinRoomBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-4 rounded-md transition-colors text-sm">
+                        ချိတ်ဆက်မည်
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Left Column: Scanner -->
+            <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col h-full">
+                <h2 class="text-lg font-bold text-gray-700 mb-4">📷 ကင်မရာဖြင့် ဖတ်ရန် (ဖုန်းဖြင့် အသုံးပြုပါ)</h2>
+                
+                <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-dashed border-gray-300 min-h-[300px] flex items-center justify-center relative"></div>
+
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <button id="startScanBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd" />
+                            <path d="M13 13h1v1h-1zM14 12h1v1h-1zM15 13h1v1h-1zM16 12h1v1h-1zM13 14h1v1h-1zM14 15h1v1h-1zM15 14h1v1h-1zM16 15h1v1h-1zM13 16h1v1h-1zM14 17h1v1h-1zM15 16h1v1h-1zM16 17h1v1h-1z" />
+                        </svg>
+                        စကင်ဖတ်မည်
+                    </button>
+                    <button id="stopScanBtn" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-lg transition-colors hidden">
+                        ရပ်မည်
+                    </button>
+                </div>
+
+                <div class="relative flex py-5 items-center">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">သို့မဟုတ်</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">လက်ဖြင့် ထည့်သွင်းရန်</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="manualInput" placeholder="ဥပမာ - 351234567890123" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <button id="addManualBtn" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            ပေါင်းထည့်မည်
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results List -->
+            <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col h-[600px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-700">📋 စာရင်းများ</h2>
+                    <div class="flex gap-2 items-center">
+                        <div class="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-md text-sm font-semibold">
+                            <span id="totalCount">0</span> လုံး
+                        </div>
+                        <button id="copyAllBtn" class="text-sm bg-green-100 text-green-700 hover:bg-green-200 py-1.5 px-3 rounded-md font-medium transition-colors">
+                            Copy ကူးမည်
+                        </button>
+                        <button id="clearAllBtn" class="text-sm bg-red-50 text-red-600 hover:bg-red-100 py-1.5 px-3 rounded-md font-medium transition-colors">
+                            ဖျက်မည်
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50 p-2">
+                    <ul id="imeiList" class="space-y-2">
+                        <div id="emptyState" class="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            <p>စကင်ဖတ်ထားသော IMEI များ ဤနေရာတွင် ပေါ်လာပါမည်။</p>
+                        </div>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 pointer-events-none z-50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+        <span id="toastMessage">Copy ကူးယူပြီးပါပြီ</span>
+    </div>
+
+    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =========================================================================
+        // အောက်ပါ နေရာတွင် အစ်ကို့ရဲ့ Firebase Config ကို အစားထိုးပါ
+        // =========================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5RxfrydtCO1xuop8Q2GE2Jw0SzNX6R1s",
+            authDomain: "ceirscanner.firebaseapp.com",
+            projectId: "ceirscanner",
+            storageBucket: "ceirscanner.firebasestorage.app",
+            messagingSenderId: "331047069343",
+            appId: "1:331047069343:web:7503c6f3cb91248eaee4aa",
+            measurementId: "G-QMXVFB582J"
+        };
+        // =========================================================================
+
+        // DOM Elements
+        const roomCodeInput = document.getElementById('roomCodeInput');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const cloudStatus = document.getElementById('cloudStatus');
+        const imeiList = document.getElementById('imeiList');
+        const emptyState = document.getElementById('emptyState');
+        const totalCount = document.getElementById('totalCount');
+        const beepSound = document.getElementById('beepSound');
+
+        // State Variables
+        let db, auth, currentUser;
+        let unsubscribeSnapshot = null;
+        let cloudIMEIs = []; 
+
+        // Auto-generate or load room code (5 digits)
+        let currentRoom = localStorage.getItem('imei_room_code');
+        if (!currentRoom) {
+            currentRoom = Math.floor(10000 + Math.random() * 90000).toString();
+            localStorage.setItem('imei_room_code', currentRoom);
+        }
+        roomCodeInput.value = currentRoom;
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        // Authenticate Anonymously
+        signInAnonymously(auth).catch((error) => {
+            console.error("Auth Error:", error);
+            setCloudStatus("🔴 ချိတ်ဆက်မှု ကျရှုံးပါသည် (Config စစ်ပါ)", "bg-red-100 text-red-800");
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                listenToRoom(currentRoom);
+                setCloudStatus("🟢 ချိတ်ဆက်ထားသည်", "bg-green-100 text-green-800");
+            }
+        });
+
+        function setCloudStatus(text, classes) {
+            cloudStatus.className = `inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium ${classes}`;
+            cloudStatus.innerHTML = text;
+        }
+
+        // Listen to Database (Real-time Sync)
+        function listenToRoom(roomCode) {
+            if (!currentUser) return;
+            if (unsubscribeSnapshot) unsubscribeSnapshot(); 
+
+            // Clean path for standalone database: rooms/{roomCode}/imeis
+            const roomRef = collection(db, 'rooms', roomCode, 'imeis');
+            const q = query(roomRef, orderBy("timestamp", "desc"));
+
+            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+                cloudIMEIs = [];
+                snapshot.forEach(doc => {
+                    cloudIMEIs.push({ id: doc.id, ...doc.data() });
+                });
+                updateUI();
+            }, (error) => {
+                console.error("Listen Error:", error);
+            });
+        }
+
+        // Join Room
+        joinRoomBtn.addEventListener('click', () => {
+            const newRoom = roomCodeInput.value.trim();
+            if (newRoom.length === 5) {
+                currentRoom = newRoom;
+                localStorage.setItem('imei_room_code', currentRoom);
+                listenToRoom(currentRoom);
+                window.showToast("ကုဒ် " + currentRoom + " သို့ ပြောင်းလဲချိတ်ဆက်လိုက်ပါပြီ");
+            } else {
+                alert("ကုဒ် နံပါတ် ၅ လုံး တိတိဖြစ်ရပါမည်။");
+            }
+        });
+
+        // Add to Database
+        window.addIMEIToCloud = async function(imeiStr) {
+            if (!imeiStr || !currentUser) return;
+            if (cloudIMEIs.some(item => item.imei === imeiStr)) return; // No duplicates
+
+            const roomRef = collection(db, 'rooms', currentRoom, 'imeis');
+            try {
+                await addDoc(roomRef, {
+                    imei: imeiStr,
+                    timestamp: Date.now(),
+                    addedBy: currentUser.uid
+                });
+                beepSound.currentTime = 0;
+                beepSound.play().catch(e => {});
+            } catch (error) {
+                console.error("Add Error:", error);
+            }
+        };
+
+        // Delete from Database
+        window.removeIMEI = async function(docId) {
+            if (currentUser) {
+                try {
+                    await deleteDoc(doc(db, 'rooms', currentRoom, 'imeis', docId));
+                } catch (error) { console.error("Delete Error:", error); }
+            }
+        };
+
+        // Clear All
+        document.getElementById('clearAllBtn').addEventListener('click', async () => {
+            if (cloudIMEIs.length === 0) return;
+            if(confirm('စာရင်းအားလုံးကို ဖျက်ရန် သေချာပါသလား?')) {
+                for (const item of cloudIMEIs) {
+                    try {
+                        await deleteDoc(doc(db, 'rooms', currentRoom, 'imeis', item.id));
+                    } catch (e) { console.error(e); }
+                }
+            }
+        });
+
+        // UI Functions
+        document.getElementById('copyAllBtn').addEventListener('click', () => {
+            if (cloudIMEIs.length === 0) return;
+            const textToCopy = cloudIMEIs.map(item => item.imei).join('\n');
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                window.showToast(`စုစုပေါင်း ${cloudIMEIs.length} လုံးကို Copy ကူးယူပြီးပါပြီ`);
+            });
+        });
+
+        window.copySingle = function(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                window.showToast("IMEI ကို Copy ကူးယူပြီးပါပြီ");
+            });
+        };
+
+        function updateUI() {
+            totalCount.textContent = cloudIMEIs.length;
+            if (cloudIMEIs.length === 0) {
+                emptyState.style.display = 'flex';
+                imeiList.innerHTML = '';
+                imeiList.appendChild(emptyState);
+            } else {
+                emptyState.style.display = 'none';
+                imeiList.innerHTML = '';
+                cloudIMEIs.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'bg-white p-3 rounded-md shadow-sm border border-gray-100 flex justify-between items-center group transition-all hover:border-blue-300';
+                    li.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-gray-400 text-sm font-mono">${cloudIMEIs.length - index}.</span>
+                            <span class="font-semibold text-gray-800 tracking-wider">${item.imei}</span>
+                        </div>
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="window.copySingle('${item.imei}')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-2 rounded cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            </button>
+                            <button onclick="window.removeIMEI('${item.id}')" class="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    `;
+                    imeiList.appendChild(li);
+                });
+            }
+        }
+
+        window.showToast = function(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
+        // --- Scanner Logic ---
+        let html5QrCode;
+        let isScanning = false;
+        const startScanBtn = document.getElementById('startScanBtn');
+        const stopScanBtn = document.getElementById('stopScanBtn');
+        const manualInput = document.getElementById('manualInput');
+
+        async function startScanning() {
+            try {
+                if(!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 100 }, aspectRatio: 1.777778 };
+                await html5QrCode.start({ facingMode: "environment" }, config, 
+                    (decodedText) => {
+                        const cleanText = decodedText.replace(/\D/g, ''); 
+                        if (cleanText.length === 15) {
+                            window.addIMEIToCloud(cleanText);
+                            const readerDiv = document.getElementById('reader');
+                            readerDiv.style.borderColor = '#22c55e';
+                            setTimeout(() => { readerDiv.style.borderColor = '#d1d5db'; }, 500);
+                        }
+                    }, 
+                    (error) => {}
+                );
+                isScanning = true;
+                startScanBtn.classList.add('hidden');
+                stopScanBtn.classList.remove('hidden');
+            } catch (err) {
+                window.showToast("ကင်မရာ ဖွင့်၍မရပါ။");
+            }
+        }
+
+        async function stopScanning() {
+            if (html5QrCode && isScanning) {
+                await html5QrCode.stop();
+                isScanning = false;
+                startScanBtn.classList.remove('hidden');
+                stopScanBtn.classList.add('hidden');
+            }
+        }
+
+        startScanBtn.addEventListener('click', startScanning);
+        stopScanBtn.addEventListener('click', stopScanning);
+
+        document.getElementById('addManualBtn').addEventListener('click', () => {
+            const val = manualInput.value.trim().replace(/\D/g, '');
+            if (val.length === 15) { window.addIMEIToCloud(val); manualInput.value = ''; } 
+            else if (val.length > 0) { alert("IMEI သည် ၁၅ လုံးတိတိ ဖြစ်ရပါမည်။"); }
+        });
+
+        manualInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const val = manualInput.value.trim().replace(/\D/g, '');
+                if (val.length === 15) { window.addIMEIToCloud(val); manualInput.value = ''; } 
+                else if (val.length > 0) { alert("IMEI သည် ၁၅ လုံးတိတိ ဖြစ်ရပါမည်။"); }
+            }
+        });
+
+    </script>
+</body>
+</html>
