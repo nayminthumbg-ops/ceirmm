@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMEI Scanner (Mobile & Web)</title>
+    <title>IMEI Scanner (Secured)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -12,107 +12,130 @@
         #reader video { object-fit: cover; border-radius: 0.5rem; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body>
 
-    <div class="max-w-6xl mx-auto space-y-6">
-        
-        <!-- Header & Cloud Connection -->
-        <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t-4 border-blue-500">
-            <div>
-                <h1 class="text-2xl font-bold text-blue-800 flex items-center gap-2">
-                    📱 ဖုန်း IMEI စကင်နာ 
-                    <span id="cloudStatus" class="inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
-                        <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                        ချိတ်ဆက်နေသည်...
-                    </span>
-                </h1>
-                <p class="text-gray-500 text-sm mt-1">ဖုန်းနှင့် ကွန်ပျူတာကို ဂဏန်း ၅ လုံးတူညီအောင် ထည့်၍ ချိတ်ဆက်ပါ။</p>
+    <!-- လုံခြုံရေး PIN မျက်နှာပြင် -->
+    <div id="pinScreen" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full text-center mx-4">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7z" />
+                </svg>
             </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">လုံခြုံရေး အတည်ပြုရန်</h2>
+            <p class="text-gray-500 mb-6 text-sm">App ကိုအသုံးပြုရန် လျှို့ဝှက် PIN နံပါတ် ရိုက်ထည့်ပါ။</p>
             
-            <div class="flex flex-col sm:flex-row items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                <label class="text-sm font-semibold text-gray-700">ချိတ်ဆက်ရန် ကုဒ် :</label>
-                <div class="flex gap-2">
-                    <input type="text" id="roomCodeInput" class="w-24 text-center font-mono font-bold text-lg border border-gray-300 rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500 outline-none" maxlength="5">
-                    <button id="joinRoomBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-4 rounded-md transition-colors text-sm">
-                        ချိတ်ဆက်မည်
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ကွန်ပျူတာတွင်သာ ပေါ်မည့် အသိပေးစာ -->
-        <div class="hidden md:flex bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-200 items-center justify-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span><b>ကွန်ပျူတာ View:</b> ဤနေရာတွင် ဖုန်းမှ စကင်ဖတ်လိုက်သော စာရင်းများကို အလွယ်တကူ Copy ကူးယူနိုင်ပါသည်။ စကင်ဖတ်ရန် ဖုန်းကို အသုံးပြုပါ။</span>
-        </div>
-
-        <div class="flex flex-col gap-6">
+            <input type="password" id="pinInput" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-center text-2xl tracking-[0.5em] focus:ring-2 focus:ring-blue-500 outline-none mb-4 font-mono" placeholder="••••••" maxlength="6">
             
-            <!-- Scanner (ဖုန်း မျက်နှာပြင်တွင်သာ ပေါ်မည် md:hidden ဖြင့် ကွန်ပျူတာတွင်ဖျောက်ထားသည်) -->
-            <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col md:hidden">
-                <h2 class="text-lg font-bold text-gray-700 mb-4">📷 စကင်ဖတ်ရန်</h2>
-                
-                <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-dashed border-gray-300 min-h-[250px] flex items-center justify-center relative"></div>
+            <button id="pinSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors">
+                ဝင်မည်
+            </button>
+            <p id="pinError" class="text-red-500 text-sm mt-3 hidden">PIN နံပါတ် မှားယွင်းနေပါသည်</p>
+        </div>
+    </div>
 
-                <div class="mt-4 flex flex-col sm:flex-row gap-3">
-                    <button id="startScanBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd" />
-                            <path d="M13 13h1v1h-1zM14 12h1v1h-1zM15 13h1v1h-1zM16 12h1v1h-1zM13 14h1v1h-1zM14 15h1v1h-1zM15 14h1v1h-1zM16 15h1v1h-1zM13 16h1v1h-1zM14 17h1v1h-1zM15 16h1v1h-1zM16 17h1v1h-1z" />
-                        </svg>
-                        စကင်ဖတ်မည်
-                    </button>
-                    <button id="stopScanBtn" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-lg transition-colors hidden">
-                        ရပ်မည်
-                    </button>
+    <!-- Main App Container (PIN မှန်မှ ပေါ်မည်) -->
+    <div id="mainApp" class="min-h-screen p-4 md:p-8 hidden">
+        <div class="max-w-6xl mx-auto space-y-6">
+            
+            <!-- Header & Cloud Connection -->
+            <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t-4 border-blue-500">
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-800 flex items-center gap-2">
+                        📱 ဖုန်း IMEI စကင်နာ 
+                        <span id="cloudStatus" class="inline-flex items-center gap-1.5 py-1 px-2 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                            ချိတ်ဆက်နေသည်...
+                        </span>
+                    </h1>
+                    <p class="text-gray-500 text-sm mt-1">ဖုန်းနှင့် ကွန်ပျူတာကို ဂဏန်း ၅ လုံးတူညီအောင် ထည့်၍ ချိတ်ဆက်ပါ။</p>
                 </div>
-            </div>
-
-            <!-- Manual Input & Results List (ဖုန်းရော ကွန်ပျူတာပါ ပေါ်မည်) -->
-            <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col h-[70vh] md:h-[600px]">
                 
-                <!-- Manual Input Bar -->
-                <div class="mb-4 pb-4 border-b border-gray-100">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">လက်ဖြင့် ထည့်သွင်းရန်</label>
+                <div class="flex flex-col sm:flex-row items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <label class="text-sm font-semibold text-gray-700">ချိတ်ဆက်ရန် ကုဒ် :</label>
                     <div class="flex gap-2">
-                        <input type="text" id="manualInput" placeholder="ဥပမာ - 351234567890123" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                        <button id="addManualBtn" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                            ပေါင်းထည့်မည်
+                        <input type="text" id="roomCodeInput" class="w-24 text-center font-mono font-bold text-lg border border-gray-300 rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500 outline-none" maxlength="5">
+                        <button id="joinRoomBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-4 rounded-md transition-colors text-sm">
+                            ချိတ်ဆက်မည်
                         </button>
                     </div>
-                </div>
-
-                <!-- List Header -->
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-gray-700">📋 စာရင်းများ</h2>
-                    <div class="flex gap-2 items-center">
-                        <div class="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-md text-sm font-semibold">
-                            <span id="totalCount">0</span> လုံး
-                        </div>
-                        <button id="copyAllBtn" class="text-sm bg-green-100 text-green-700 hover:bg-green-200 py-1.5 px-3 rounded-md font-medium transition-colors">
-                            Copy ကူးမည်
-                        </button>
-                        <button id="clearAllBtn" class="text-sm bg-red-50 text-red-600 hover:bg-red-100 py-1.5 px-3 rounded-md font-medium transition-colors">
-                            ဖျက်မည်
-                        </button>
-                    </div>
-                </div>
-
-                <!-- List Container -->
-                <div class="flex-1 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50 p-2">
-                    <ul id="imeiList" class="space-y-2">
-                        <div id="emptyState" class="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                            </svg>
-                            <p>စကင်ဖတ်ထားသော IMEI များ ဤနေရာတွင် ပေါ်လာပါမည်။</p>
-                        </div>
-                    </ul>
                 </div>
             </div>
-            
+
+            <!-- ကွန်ပျူတာတွင်သာ ပေါ်မည့် အသိပေးစာ -->
+            <div class="hidden md:flex bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-200 items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span><b>ကွန်ပျူတာ View:</b> ဤနေရာတွင် ဖုန်းမှ စကင်ဖတ်လိုက်သော စာရင်းများကို အလွယ်တကူ Copy ကူးယူနိုင်ပါသည်။ စကင်ဖတ်ရန် ဖုန်းကို အသုံးပြုပါ။</span>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                
+                <!-- Scanner (ဖုန်း မျက်နှာပြင်တွင်သာ ပေါ်မည် md:hidden ဖြင့် ကွန်ပျူတာတွင်ဖျောက်ထားသည်) -->
+                <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col md:hidden">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4">📷 စကင်ဖတ်ရန်</h2>
+                    
+                    <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-dashed border-gray-300 min-h-[250px] flex items-center justify-center relative"></div>
+
+                    <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                        <button id="startScanBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd" />
+                                <path d="M13 13h1v1h-1zM14 12h1v1h-1zM15 13h1v1h-1zM16 12h1v1h-1zM13 14h1v1h-1zM14 15h1v1h-1zM15 14h1v1h-1zM16 15h1v1h-1zM13 16h1v1h-1zM14 17h1v1h-1zM15 16h1v1h-1zM16 17h1v1h-1z" />
+                            </svg>
+                            စကင်ဖတ်မည်
+                        </button>
+                        <button id="stopScanBtn" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-lg transition-colors hidden">
+                            ရပ်မည်
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manual Input & Results List (ဖုန်းရော ကွန်ပျူတာပါ ပေါ်မည်) -->
+                <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col h-[70vh] md:h-[600px]">
+                    
+                    <!-- Manual Input Bar -->
+                    <div class="mb-4 pb-4 border-b border-gray-100">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">လက်ဖြင့် ထည့်သွင်းရန်</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="manualInput" placeholder="ဥပမာ - 351234567890123" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <button id="addManualBtn" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                ပေါင်းထည့်မည်
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- List Header -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-700">📋 စာရင်းများ</h2>
+                        <div class="flex gap-2 items-center">
+                            <div class="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-md text-sm font-semibold">
+                                <span id="totalCount">0</span> လုံး
+                            </div>
+                            <button id="copyAllBtn" class="text-sm bg-green-100 text-green-700 hover:bg-green-200 py-1.5 px-3 rounded-md font-medium transition-colors">
+                                Copy ကူးမည်
+                            </button>
+                            <button id="clearAllBtn" class="text-sm bg-red-50 text-red-600 hover:bg-red-100 py-1.5 px-3 rounded-md font-medium transition-colors">
+                                ဖျက်မည်
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- List Container -->
+                    <div class="flex-1 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50 p-2">
+                        <ul id="imeiList" class="space-y-2">
+                            <div id="emptyState" class="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                </svg>
+                                <p>စကင်ဖတ်ထားသော IMEI များ ဤနေရာတွင် ပေါ်လာပါမည်။</p>
+                            </div>
+                        </ul>
+                    </div>
+                </div>
+                
+            </div>
         </div>
     </div>
 
@@ -124,11 +147,43 @@
 
     <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-    <!-- Firebase SDK -->
+    <!-- App Logic & Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- PIN Security Logic ---
+        const SECURE_PIN = "908090";
+        const pinScreen = document.getElementById('pinScreen');
+        const mainApp = document.getElementById('mainApp');
+        const pinInput = document.getElementById('pinInput');
+        const pinSubmitBtn = document.getElementById('pinSubmitBtn');
+        const pinError = document.getElementById('pinError');
+
+        // Check session storage (User doesn't have to login repeatedly if tab is open)
+        if (sessionStorage.getItem('imeiAppAuthenticated') === 'true') {
+            pinScreen.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+        }
+
+        function verifyPIN() {
+            if (pinInput.value === SECURE_PIN) {
+                sessionStorage.setItem('imeiAppAuthenticated', 'true');
+                pinScreen.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+            } else {
+                pinError.classList.remove('hidden');
+                pinInput.value = '';
+                pinInput.focus();
+            }
+        }
+
+        pinSubmitBtn.addEventListener('click', verifyPIN);
+        pinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyPIN();
+        });
+        // -------------------------
 
         const firebaseConfig = {
             apiKey: "AIzaSyA5RxfrydtCO1xuop8Q2GE2Jw0SzNX6R1s",
@@ -311,7 +366,6 @@
             try {
                 if(!html5QrCode) html5QrCode = new Html5Qrcode("reader");
                 
-                // ပုံမှန် အလုပ်လုပ်သော လေးထောင့်အကွက်သို့ ပြန်ပြောင်းထားသည်
                 const config = { 
                     fps: 10, 
                     qrbox: { width: 250, height: 100 }, 
@@ -327,7 +381,6 @@
                             readerDiv.style.borderColor = '#22c55e';
                             setTimeout(() => { readerDiv.style.borderColor = '#d1d5db'; }, 500);
                             
-                            // Barcode ဖတ်မိသည်နှင့် ကင်မရာကို အလိုအလျောက် ရပ်တန့်ပေးမည်
                             stopScanning();
                             window.showToast("အောင်မြင်စွာ ဖတ်ပြီးပါပြီ");
                         }
